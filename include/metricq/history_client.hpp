@@ -45,6 +45,14 @@ class HistoryResponseAggregateView;
 class HistoryClient : public Connection
 {
 public:
+    enum class Type
+    {
+        AGGREGATE_TIMELINE,
+        AGGREGATE,
+        LAST_VALUE,
+        FLEX_TIMELINE
+    };
+
     HistoryClient(const std::string& token, bool add_uuid = true);
 
     // We have to do this because of the ConnectionHandler forward declaration
@@ -52,7 +60,7 @@ public:
 
     // shall NOT be used before on_history_ready() was called
     std::string history_request(const std::string& id, TimePoint begin, TimePoint end,
-                                Duration interval);
+                                Duration interval, Type request_type = Type::FLEX_TIMELINE);
 
 protected:
     virtual void on_history_response(const std::string& id, const HistoryResponse& response);

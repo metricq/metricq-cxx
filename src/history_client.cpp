@@ -40,6 +40,19 @@
 
 using namespace std::placeholders;
 
+static_assert(static_cast<int>(metricq::HistoryClient::Type::FLEX_TIMELINE) ==
+                  metricq::HistoryRequest::FLEX_TIMELINE,
+              "Someone broke the protobuf ABI");
+static_assert(static_cast<int>(metricq::HistoryClient::Type::AGGREGATE_TIMELINE) ==
+                  metricq::HistoryRequest::AGGREGATE_TIMELINE,
+              "Someone broke the protobuf ABI");
+static_assert(static_cast<int>(metricq::HistoryClient::Type::AGGREGATE) ==
+                  metricq::HistoryRequest::AGGREGATE,
+              "Someone broke the protobuf ABI");
+static_assert(static_cast<int>(metricq::HistoryClient::Type::LAST_VALUE) ==
+                  metricq::HistoryRequest::LAST_VALUE,
+              "Someone broke the protobuf ABI");
+
 namespace metricq
 {
 HistoryClient::HistoryClient(const std::string& token, bool add_uuid) : Connection(token, add_uuid)
@@ -79,14 +92,13 @@ void HistoryClient::setup_history_consumer(const std::string& name, int message_
 }
 
 std::string HistoryClient::history_request(const std::string& id, TimePoint begin, TimePoint end,
-                                           Duration interval)
+                                           Duration interval, Type request_type)
 {
     HistoryRequest request;
     request.set_start_time(begin.time_since_epoch().count());
     request.set_end_time(end.time_since_epoch().count());
     request.set_interval_max(interval.count());
-    // TODO expose the request type to the user. For now it's fine.
-    request.set_type(HistoryRequest::FLEX_TIMELINE);
+    request.set_type(HistoryRequest::RequestType(static_cast<int>(request_type)));
 
     auto correlation_id = std::string("metricq-history-") + token() + "-" + uuid();
 
@@ -130,7 +142,7 @@ void HistoryClient::config(const metricq::json& config)
     history_exchange_ = config["historyExchange"].get<std::string>();
     history_queue_ = config["historyQueue"].get<std::string>();
 
-    on_history_config(config["config"]);
+    on_history_config(config.count("config") ? config["config"] : json::object());
 
     setup_history_queue();
 
