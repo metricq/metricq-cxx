@@ -142,7 +142,7 @@ void HistoryClient::config(const metricq::json& config)
     history_exchange_ = config["historyExchange"].get<std::string>();
     history_queue_ = config["historyQueue"].get<std::string>();
 
-    on_history_config(config["config"]);
+    on_history_config(config.count("config") ? config["config"] : json::object());
 
     setup_history_queue();
 
